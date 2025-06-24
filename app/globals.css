@@ -1,26 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: oklch(27.9% 0.041 260.031);
+  --accent: oklch(20.8% 0.042 265.755);
+  --foreground: oklch(96.8% 0.007 247.896);
+}
+
+body {
+  @apply bg-background text-foreground;
+}
+
+.dashboard {
+  @apply grid grid-cols-[256px_1fr] grid-rows-[64px_1fr] h-screen w-screen overflow-hidden;
+}
+
+.side-bar {
+  @apply col-span-1 row-span-2 h-full;
+}
+
+.side-bar-links {
+  @apply flex flex-col justify-center space-y-4;
+}
+
+.side-bar-link {
+  @apply flex items-center space-x-1.5 text-base;
+}
+.header {
+  @apply col-start-2 row-start-1 shadow-md flex items-center justify-end px-4 gap-2 text-sm;
+}
+
+.main {
+  @apply col-start-2 row-start-2 bg-accent p-6 overflow-y-auto;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
