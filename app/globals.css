@@ -33,6 +33,14 @@ body {
   @apply col-start-2 row-start-2 bg-accent p-6 overflow-y-auto;
 }
 
+.add-btn {
+  @apply rounded-lg bg-foreground text-background p-2 mr-2 mt-2 mb-2 hover:bg-background hover:text-foreground cursor-pointer;
+}
+
+.transactions-form {
+  @apply bg-background flex text-foreground flex-col;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
