@@ -11,6 +11,6 @@
   Tailwind CSS: Style the transaction input and display.
 
 1. I need to add remove btn for transaction - OK
-2. Edit btn too: It'll open form with existing data and user will modify it however needed
+2. Edit btn too: It'll open form with existing data and user will modify it however needed +
 3. formatting for date in table - OK
 4. I need to add toasts in form too for better UX
