@@ -1,22 +1,20 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import toast, { Toaster } from "react-hot-toast";
 
 function TransactionForm({ onClose, onTransactionSuccess, initialData }) {
-  // useForm setup:
-  // - register: For registering inputs.
-  // - handleSubmit: For handling form submission.
-  // - reset: For resetting form fields.
-  // - setValue: For programmatically setting form values (used for initialData).
-  const { register, handleSubmit, reset, setValue } = useForm();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm();
 
-  // Determine if the form is in editing mode
-  const isEditing = !!initialData; // isEditing is true if initialData is provided
+  const isEditing = !!initialData;
 
-  // useEffect to populate form fields when initialData changes (for editing)
   useEffect(() => {
     if (initialData) {
-      // If initialData is available, populate the form fields
-      // Format date to 'YYYY-MM-DD' for date input type
       setValue(
         "date",
         initialData.date
@@ -29,23 +27,18 @@ function TransactionForm({ onClose, onTransactionSuccess, initialData }) {
       setValue("type", initialData.type);
       setValue("userId", initialData.userId);
     } else {
-      // If no initialData, reset the form for adding a new transaction
       reset();
-      // Set default date to today for new transactions
       setValue("date", new Date().toISOString().split("T")[0]);
-      // Set a default userId if not authenticated or for demo
       setValue("userId", "demoUser123");
     }
-  }, [initialData, reset, setValue]); // Dependencies for useEffect
+  }, [initialData, reset, setValue]);
 
-  // Function to handle form submission (both add and edit)
   const onSubmit = async (data) => {
     let response;
-    let url = "/api/transactions"; // Default URL for POST (add)
-    let method = "POST"; // Default method for POST (add)
+    let url = "/api/transactions";
+    let method = "POST";
 
     if (isEditing) {
-      // If in editing mode, change URL and method for PUT request
       url = `/api/transactions/${initialData._id}`;
       method = "PUT";
     }
@@ -59,11 +52,15 @@ function TransactionForm({ onClose, onTransactionSuccess, initialData }) {
 
       const result = await response.json();
 
-      if (response.ok && result.success) {
+      if (response.ok) {
         console.log("Transaction saved successfully:", result.data);
-        reset(); // Reset the form fields
-        onClose(); // Close the modal
-        // Call the success callback to trigger data re-fetch in parent
+        toast.success(
+          isEditing
+            ? "Transaction updated successfully!"
+            : "Transaction added successfully!"
+        );
+        reset();
+        onClose();
         if (onTransactionSuccess) {
           onTransactionSuccess();
         }
@@ -72,88 +69,98 @@ function TransactionForm({ onClose, onTransactionSuccess, initialData }) {
           "Error saving transaction:",
           result.message || response.statusText
         );
-        // Optionally display an error message to the user
-        alert(`Error: ${result.message || "Failed to save transaction."}`);
+        toast.error(
+          `Error: ${result.message || "Failed to save transaction."}`
+        );
       }
     } catch (error) {
       console.error("Network error saving transaction:", error);
-      alert("Network error. Please try again.");
+      toast.error("Network error. Please try again.");
     }
   };
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 p-4 bg-white rounded-lg shadow-inner" // Adjusted bg-white from bg-background
+      className="space-y-4 p-4 bg-white rounded-lg shadow-inner"
     >
-      {/* Date Field */}
+      <Toaster />
       <div>
         <label
           htmlFor="date"
-          className="block text-sm font-medium text-gray-700 mb-1" // Adjusted text color
+          className="block text-sm font-medium text-gray-700 mb-1"
         >
           Date
         </label>
         <input
           type="date"
-          {...register("date", { required: true })}
+          {...register("date", { required: "Date is required" })}
           id="date"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900" /* Added text-gray-900 */
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
         />
+        {errors.date && (
+          <p className="text-red-500 text-xs mt-1">{errors.date.message}</p>
+        )}
       </div>
 
-      {/* Amount Field */}
       <div>
         <label
           htmlFor="amount"
-          className="block text-sm font-medium text-gray-700 mb-1" // Adjusted text color
+          className="block text-sm font-medium text-gray-700 mb-1"
         >
           Amount
         </label>
         <input
           type="number"
-          {...register("amount", { required: true, valueAsNumber: true })}
+          {...register("amount", {
+            required: "Amount is required",
+            valueAsNumber: true,
+            min: { value: 0.01, message: "Amount must be greater than 0" },
+          })}
           id="amount"
           step="0.01"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900" /* Added text-gray-900 */
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
           placeholder="e.g., 150.75"
         />
+        {errors.amount && (
+          <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>
+        )}
       </div>
 
-      {/* Description Field */}
       <div>
         <label
           htmlFor="description"
-          className="block text-sm font-medium text-gray-700 mb-1" // Adjusted text color
+          className="block text-sm font-medium text-gray-700 mb-1"
         >
           Description
         </label>
         <textarea
-          {...register("description")}
+          {...register("description", { required: "Description is required" })}
           id="description"
           rows="3"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900" /* Added text-gray-900 */
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
           placeholder="e.g., Monthly salary, Freelance project, Gift"
         />
+        {errors.description && (
+          <p className="text-red-500 text-xs mt-1">
+            {errors.description.message}
+          </p>
+        )}
       </div>
 
-      {/* Category Field */}
       <div>
-        {" "}
-        {/* Wrapped in a div for consistent spacing */}
         <label
           htmlFor="category"
-          className="block text-sm font-medium text-gray-700 mb-1" // Adjusted text color
+          className="block text-sm font-medium text-gray-700 mb-1"
         >
           Category
         </label>
         <select
-          {...register("category", { required: true })} // Added required
+          {...register("category", { required: "Category is required" })}
           id="category"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900" /* Added text-gray-900 */
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
         >
-          <option value="">Select a category</option>{" "}
-          {/* Added default empty option */}
+          <option value="">Select a category</option>
           <option value="Food">Food</option>
           <option value="Transport">Transport</option>
           <option value="Entertainment">Entertainment</option>
@@ -163,62 +170,60 @@ function TransactionForm({ onClose, onTransactionSuccess, initialData }) {
           <option value="Gift">Gift</option>
           <option value="Other">Other</option>
         </select>
+        {errors.category && (
+          <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>
+        )}
       </div>
 
-      {/* Type Field */}
       <div>
-        {" "}
-        {/* Wrapped in a div for consistent spacing */}
         <label
           htmlFor="type"
-          className="block text-sm font-medium text-gray-700 mb-1" // Adjusted text color
+          className="block text-sm font-medium text-gray-700 mb-1"
         >
           Type
         </label>
         <select
-          {...register("type", { required: true })} // Added required
+          {...register("type", { required: "Type is required" })}
           id="type"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900" /* Added text-gray-900 */
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
         >
-          <option value="">Select type</option>{" "}
-          {/* Added default empty option */}
+          <option value="">Select type</option>
           <option value="Income">Income</option>
           <option value="Expense">Expense</option>
         </select>
+        {errors.type && (
+          <p className="text-red-500 text-xs mt-1">{errors.type.message}</p>
+        )}
       </div>
 
-      {/* User ID Field - Consider making this dynamic with auth later */}
       <div>
-        {" "}
-        {/* Wrapped in a div for consistent spacing */}
         <label
           htmlFor="userId"
-          className="block text-sm font-medium text-gray-700 mb-1" // Adjusted text color
+          className="block text-sm font-medium text-gray-700 mb-1"
         >
           User ID
         </label>
         <input
-          type="text" // Changed to text input as it's a specific ID
-          {...register("userId", { required: true })}
+          type="text"
+          {...register("userId", { required: "User ID is required" })}
           id="userId"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900" /* Added text-gray-900 */
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
           placeholder="e.g., user123"
         />
+        {errors.userId && (
+          <p className="text-red-500 text-xs mt-1">{errors.userId.message}</p>
+        )}
       </div>
 
-      {/* Submit and Close Buttons */}
       <div className="flex justify-end space-x-3 pt-4">
-        {" "}
-        {/* Adjusted spacing and alignment */}
         <button
           type="submit"
           className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
         >
-          {isEditing ? "Save Changes" : "Add Transaction"}{" "}
-          {/* Dynamic button text */}
+          {isEditing ? "Save Changes" : "Add Transaction"}
         </button>
         <button
-          type="button" // Important: set type="button" to prevent accidental form submission
+          type="button"
           onClick={onClose}
           className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors duration-200"
         >
