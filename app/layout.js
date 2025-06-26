@@ -4,6 +4,8 @@ import "./globals.css";
 import SideBar from "./(components)/(common)/SideBar";
 import Header from "./(components)/(common)/Header";
 
+import { Providers } from "./(providers)/providers";
+
 const spaceMono = Space_Mono({
   weight: ["400", "700"],
   subsets: ["latin"],
@@ -21,11 +23,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={spaceMono.className}>
       <body>
-        <div className="dashboard">
-          <SideBar className="side-bar" />
-          <Header className="header" />
-          <main className="main">{children}</main>
-        </div>
+        <Providers>
+          <main>{children}</main>
+        </Providers>
       </body>
     </html>
   );

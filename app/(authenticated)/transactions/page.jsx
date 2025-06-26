@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import TransactionForm from "../(components)/(common)/TransactionForm";
-import Modal from "../(components)/(common)/Modal";
-import TransactionsTable from "../(components)/(common)/TransactionsTable";
-import DeleteConfirmation from "../(components)/(common)/DeleteConfirmation";
 import toast, { Toaster } from "react-hot-toast";
+import TransactionForm from "@/app/(components)/(common)/TransactionForm";
+import Modal from "@/app/(components)/(common)/Modal";
+import TransactionsTable from "@/app/(components)/(common)/TransactionsTable";
+import DeleteConfirmation from "@/app/(components)/(common)/DeleteConfirmation";
 
 function Transactions() {
   const [transactions, setTransactions] = useState([]);

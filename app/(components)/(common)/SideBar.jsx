@@ -19,7 +19,7 @@ function SideBar() {
       <ul className="side-bar-links">
         <li className="side-bar-link">
           <FaChartBar />
-          <Link href="/">Dashboard</Link>
+          <Link href="/dashboard">Dashboard</Link>
         </li>
 
         <li className="side-bar-link">
