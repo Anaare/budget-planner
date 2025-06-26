@@ -34,11 +34,19 @@ body {
 }
 
 .add-btn {
-  @apply rounded-lg bg-foreground text-background p-2 mr-2 mt-2 mb-2 hover:bg-background hover:text-foreground cursor-pointer;
+  @apply rounded-lg bg-gray-200 text-background p-2 hover:bg-background hover:text-foreground cursor-pointer;
 }
 
 .transactions-form {
   @apply bg-background flex text-foreground flex-col;
+}
+
+.filter {
+  @apply flex space-x-2;
+}
+
+.filter-btn {
+  @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-2 rounded;
 }
 
 @theme inline {

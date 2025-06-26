@@ -15,6 +15,13 @@ function Transactions() {
   const [transactionToEdit, setTransactionToEdit] = useState(null);
   const [transactionToDeleteId, setTransactionToDeleteId] = useState(null);
 
+  const [activeFilter, setActiveFilter] = useState(null);
+
+  const handleFilterClick = (days) => {
+    setActiveFilter(days);
+    setPage(1);
+  };
+
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
@@ -38,9 +45,13 @@ function Transactions() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(
-        `/api/transactions?page=${page}&limit=${limit}`
-      );
+      let queryString = `/api/transactions?page=${page}&limit=${limit}`;
+      if (activeFilter !== null) {
+        // Changed to check against null to include 0 if ever needed
+        queryString += `&days=${activeFilter}`;
+      }
+
+      const response = await fetch(queryString);
       const result = await response.json();
 
       if (response.ok) {
@@ -111,7 +122,7 @@ function Transactions() {
 
   useEffect(() => {
     fetchTransactions();
-  }, [page]);
+  }, [page, activeFilter]);
 
   if (loading) {
     return (
@@ -131,11 +142,13 @@ function Transactions() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
-      <Toaster />
+      <Toaster position="top-right" /> {/* Added position for toaster */}
       <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">
         Your Transactions
       </h2>
-      <div className="flex space-x-4 mb-4">
+      <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-4 justify-between items-center">
+        {" "}
+        {/* Added flex-col/row and items-center for responsiveness and alignment */}
         <button
           className="add-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           onClick={() => {
@@ -145,8 +158,63 @@ function Transactions() {
         >
           Add A Transaction
         </button>
+        <div className="filter flex space-x-2">
+          {" "}
+          {/* Added flex and space-x for filter buttons */}
+          <button
+            className={`
+              py-2 px-4 rounded-md font-semibold transition-colors duration-200
+              ${
+                activeFilter === null
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }
+            `}
+            onClick={() => handleFilterClick(null)}
+          >
+            All Time
+          </button>
+          <button
+            className={`
+              py-2 px-4 rounded-md font-semibold transition-colors duration-200
+              ${
+                activeFilter === 7
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }
+            `}
+            onClick={() => handleFilterClick(7)}
+          >
+            7 Days
+          </button>
+          <button
+            className={`
+              py-2 px-4 rounded-md font-semibold transition-colors duration-200
+              ${
+                activeFilter === 14
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }
+            `}
+            onClick={() => handleFilterClick(14)}
+          >
+            14 Days
+          </button>
+          <button
+            className={`
+              py-2 px-4 rounded-md font-semibold transition-colors duration-200
+              ${
+                activeFilter === 30
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }
+            `}
+            onClick={() => handleFilterClick(30)}
+          >
+            30 Days
+          </button>
+        </div>
       </div>
-
       {transactions.length > 0 ? (
         <>
           <TransactionsTable
@@ -176,11 +244,10 @@ function Transactions() {
           </div>
         </>
       ) : (
-        <h1 className="text-background text-center text-3xl">
+        <h1 className="text-gray-600 text-center text-3xl mt-10">
           You don't have any transactions yet.. 👀 add some 😎
         </h1>
       )}
-
       <Modal
         isOpen={isFormModalOpen}
         onClose={closeFormModal}
@@ -192,7 +259,6 @@ function Transactions() {
           initialData={transactionToEdit}
         />
       </Modal>
-
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={closeDeleteModal}
