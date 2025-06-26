@@ -179,81 +179,81 @@ function Transactions() {
         >
           Add A Transaction
         </button>
+        {transactions.length > 0 && (
+          <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+            {/* Filtering Buttons */}
+            <div className="filter-buttons flex flex-wrap gap-2 justify-center sm:justify-start">
+              <span className="self-center text-gray-700 font-medium whitespace-nowrap">
+                Filter by:
+              </span>
+              <button
+                className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
+                  activeFilter === null
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
+                onClick={() => handleFilterClick(null)}
+              >
+                All Time
+              </button>
+              <button
+                className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
+                  activeFilter === 7
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
+                onClick={() => handleFilterClick(7)}
+              >
+                7 Days
+              </button>
+              <button
+                className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
+                  activeFilter === 14
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
+                onClick={() => handleFilterClick(14)}
+              >
+                14 Days
+              </button>
+              <button
+                className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
+                  activeFilter === 30
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
+                onClick={() => handleFilterClick(30)}
+              >
+                30 Days
+              </button>
+            </div>
 
-        {/* Filters and Sorting Container */}
-        <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-          {/* Filtering Buttons */}
-          <div className="filter-buttons flex flex-wrap gap-2 justify-center sm:justify-start">
-            <span className="self-center text-gray-700 font-medium whitespace-nowrap">
-              Filter by:
-            </span>
-            <button
-              className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
-                activeFilter === null
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-              }`}
-              onClick={() => handleFilterClick(null)}
-            >
-              All Time
-            </button>
-            <button
-              className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
-                activeFilter === 7
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-              }`}
-              onClick={() => handleFilterClick(7)}
-            >
-              7 Days
-            </button>
-            <button
-              className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
-                activeFilter === 14
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-              }`}
-              onClick={() => handleFilterClick(14)}
-            >
-              14 Days
-            </button>
-            <button
-              className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
-                activeFilter === 30
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-              }`}
-              onClick={() => handleFilterClick(30)}
-            >
-              30 Days
-            </button>
+            {/* Sorting Dropdown */}
+            <div className="sort-control flex items-center gap-2 justify-center sm:justify-start">
+              <label
+                htmlFor="sort-by"
+                className="text-gray-700 font-medium whitespace-nowrap"
+              >
+                Sort by:
+              </label>
+              <select
+                id="sort-by"
+                value={`${sortBy}-${sortOrder}`}
+                onChange={handleSortChange}
+                className="py-2 px-4 rounded-md font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="date-desc">Date (Newest First)</option>
+                <option value="date-asc">Date (Oldest First)</option>
+                <option value="amount-desc">Amount (High to Low)</option>
+                <option value="amount-asc">Amount (Low to High)</option>
+                <option value="category-asc">Category (A-Z)</option>
+                <option value="category-desc">Category (Z-A)</option>
+                <option value="type-asc">Type (A-Z)</option>
+                <option value="type-desc">Type (Z-A)</option>
+              </select>
+            </div>
           </div>
-
-          {/* Sorting Dropdown */}
-          <div className="sort-control flex items-center gap-2 justify-center sm:justify-start">
-            <label
-              htmlFor="sort-by"
-              className="text-gray-700 font-medium whitespace-nowrap"
-            >
-              Sort by:
-            </label>
-            <select
-              id="sort-by"
-              value={`${sortBy}-${sortOrder}`}
-              onChange={handleSortChange}
-              className="py-2 px-4 rounded-md font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="date-desc">Date (Newest First)</option>
-              <option value="date-asc">Date (Oldest First)</option>
-              <option value="amount-desc">Amount (High to Low)</option>
-              <option value="amount-asc">Amount (Low to High)</option>
-              <option value="category-asc">Category (A-Z)</option>
-              <option value="category-desc">Category (Z-A)</option>
-              <option value="type-asc">Type (A-Z)</option>
-              <option value="type-desc">Type (Z-A)</option>
-            </select>
-          </div>
-        </div>
+        )}
       </div>
       {transactions.length > 0 ? (
         <>

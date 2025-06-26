@@ -21,18 +21,12 @@ function SideBar() {
           <FaChartBar />
           <Link href="/">Dashboard</Link>
         </li>
-        <li className="side-bar-link">
-          <MdManageAccounts className="text-xl" />
-          <Link href="/accounts">Accounts</Link>
-        </li>
+
         <li className="side-bar-link">
           <GrTransaction />
           <Link href="/transactions">Transactions</Link>
         </li>
-        <li className="side-bar-link">
-          <MdAttachMoney className="text-xl" />
-          <Link href="/budgets">Budgets</Link>
-        </li>
+
         <li className="side-bar-link">
           <IoIosSettings className="text-xl" />
           <Link href="/settings">Settings</Link>
