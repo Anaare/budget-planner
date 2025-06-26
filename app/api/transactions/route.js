@@ -9,14 +9,22 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-    const days = parseInt(searchParams.get("days")); // Get the 'days' filter
+    const days = parseInt(searchParams.get("days"));
+
+    const sortBy = searchParams.get("sortBy") || "date";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
 
     let query = {};
     if (!isNaN(days) && days > 0) {
       const today = new Date();
-      const cutoffDate = new Date(today.setDate(today.getDate() - days));
-      query.date = { $gte: cutoffDate }; // Filter transactions from 'cutoffDate' onwards
+      const cutoffDate = new Date(today.getTime());
+      cutoffDate.setDate(cutoffDate.getDate() - days);
+      query.date = { $gte: cutoffDate };
     }
+
+    const sortOptions = {};
+
+    sortOptions[sortBy] = sortOrder === "asc" ? 1 : -1;
 
     const totalTransactions = await Transaction.countDocuments(query);
     const totalPages = Math.ceil(totalTransactions / limit);
@@ -24,7 +32,7 @@ export async function GET(request) {
     const transactions = await Transaction.find(query)
       .skip((page - 1) * limit)
       .limit(limit)
-      .sort({ date: -1 }); // Optional: sort by date descending
+      .sort(sortOptions);
 
     return NextResponse.json(
       {
@@ -37,9 +45,10 @@ export async function GET(request) {
       { status: 200 }
     );
   } catch (error) {
+    console.error("Error fetching transactions:", error);
     return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 400 }
+      { success: false, message: error.message || "Internal server error" },
+      { status: 500 }
     );
   }
 }

@@ -15,12 +15,12 @@ function Transactions() {
   const [transactionToEdit, setTransactionToEdit] = useState(null);
   const [transactionToDeleteId, setTransactionToDeleteId] = useState(null);
 
+  // State for filtering
   const [activeFilter, setActiveFilter] = useState(null);
 
-  const handleFilterClick = (days) => {
-    setActiveFilter(days);
-    setPage(1);
-  };
+  // State for sorting
+  const [sortBy, setSortBy] = useState("date"); // Default sort by date
+  const [sortOrder, setSortOrder] = useState("desc"); // Default sort descending
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -40,15 +40,37 @@ function Transactions() {
     fetchTransactions();
   };
 
+  const handleFilterClick = (days) => {
+    setActiveFilter(days);
+    setPage(1); // Reset page when filter changes
+  };
+
+  // New handler for sorting changes
+  const handleSortChange = (e) => {
+    const [field, order] = e.target.value.split("-");
+    setSortBy(field);
+    setSortOrder(order);
+    setPage(1); // Reset page when sort changes
+  };
+
   const fetchTransactions = async () => {
     try {
       setLoading(true);
       setError(null);
 
       let queryString = `/api/transactions?page=${page}&limit=${limit}`;
+
+      // Add filtering parameters
       if (activeFilter !== null) {
-        // Changed to check against null to include 0 if ever needed
         queryString += `&days=${activeFilter}`;
+      }
+
+      // Add sorting parameters
+      // Only append if sortBy is not empty or default, assuming your API
+      // expects 'date' and 'desc' by default if no sort params are provided.
+      // If your API needs them explicitly for default, remove the check.
+      if (sortBy) {
+        queryString += `&sortBy=${sortBy}&sortOrder=${sortOrder}`;
       }
 
       const response = await fetch(queryString);
@@ -122,7 +144,7 @@ function Transactions() {
 
   useEffect(() => {
     fetchTransactions();
-  }, [page, activeFilter]);
+  }, [page, activeFilter, sortBy, sortOrder]);
 
   if (loading) {
     return (
@@ -142,15 +164,14 @@ function Transactions() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
-      <Toaster position="top-right" /> {/* Added position for toaster */}
+      <Toaster position="top-right" />
       <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">
         Your Transactions
       </h2>
-      <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-4 justify-between items-center">
-        {" "}
-        {/* Added flex-col/row and items-center for responsiveness and alignment */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+        {/* Add Transaction Button */}
         <button
-          className="add-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="add-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full sm:w-auto"
           onClick={() => {
             setTransactionToEdit(null);
             openFormModal();
@@ -158,61 +179,80 @@ function Transactions() {
         >
           Add A Transaction
         </button>
-        <div className="filter flex space-x-2">
-          {" "}
-          {/* Added flex and space-x for filter buttons */}
-          <button
-            className={`
-              py-2 px-4 rounded-md font-semibold transition-colors duration-200
-              ${
+
+        {/* Filters and Sorting Container */}
+        <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+          {/* Filtering Buttons */}
+          <div className="filter-buttons flex flex-wrap gap-2 justify-center sm:justify-start">
+            <span className="self-center text-gray-700 font-medium whitespace-nowrap">
+              Filter by:
+            </span>
+            <button
+              className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
                 activeFilter === null
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-              }
-            `}
-            onClick={() => handleFilterClick(null)}
-          >
-            All Time
-          </button>
-          <button
-            className={`
-              py-2 px-4 rounded-md font-semibold transition-colors duration-200
-              ${
+              }`}
+              onClick={() => handleFilterClick(null)}
+            >
+              All Time
+            </button>
+            <button
+              className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
                 activeFilter === 7
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-              }
-            `}
-            onClick={() => handleFilterClick(7)}
-          >
-            7 Days
-          </button>
-          <button
-            className={`
-              py-2 px-4 rounded-md font-semibold transition-colors duration-200
-              ${
+              }`}
+              onClick={() => handleFilterClick(7)}
+            >
+              7 Days
+            </button>
+            <button
+              className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
                 activeFilter === 14
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-              }
-            `}
-            onClick={() => handleFilterClick(14)}
-          >
-            14 Days
-          </button>
-          <button
-            className={`
-              py-2 px-4 rounded-md font-semibold transition-colors duration-200
-              ${
+              }`}
+              onClick={() => handleFilterClick(14)}
+            >
+              14 Days
+            </button>
+            <button
+              className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
                 activeFilter === 30
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-              }
-            `}
-            onClick={() => handleFilterClick(30)}
-          >
-            30 Days
-          </button>
+              }`}
+              onClick={() => handleFilterClick(30)}
+            >
+              30 Days
+            </button>
+          </div>
+
+          {/* Sorting Dropdown */}
+          <div className="sort-control flex items-center gap-2 justify-center sm:justify-start">
+            <label
+              htmlFor="sort-by"
+              className="text-gray-700 font-medium whitespace-nowrap"
+            >
+              Sort by:
+            </label>
+            <select
+              id="sort-by"
+              value={`${sortBy}-${sortOrder}`}
+              onChange={handleSortChange}
+              className="py-2 px-4 rounded-md font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="date-desc">Date (Newest First)</option>
+              <option value="date-asc">Date (Oldest First)</option>
+              <option value="amount-desc">Amount (High to Low)</option>
+              <option value="amount-asc">Amount (Low to High)</option>
+              <option value="category-asc">Category (A-Z)</option>
+              <option value="category-desc">Category (Z-A)</option>
+              <option value="type-asc">Type (A-Z)</option>
+              <option value="type-desc">Type (Z-A)</option>
+            </select>
+          </div>
         </div>
       </div>
       {transactions.length > 0 ? (
