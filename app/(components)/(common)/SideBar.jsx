@@ -1,9 +1,7 @@
+import { FaChartBar } from "react-icons/fa";
+import { GrTransaction } from "react-icons/gr";
 import Image from "next/image";
 import Link from "next/link";
-import { MdAttachMoney, MdDashboard, MdManageAccounts } from "react-icons/md";
-import { GrTransaction } from "react-icons/gr";
-import { FaChartBar } from "react-icons/fa";
-import { IoIosSettings } from "react-icons/io";
 
 function SideBar() {
   return (
@@ -25,11 +23,6 @@ function SideBar() {
         <li className="side-bar-link">
           <GrTransaction />
           <Link href="/transactions">Transactions</Link>
-        </li>
-
-        <li className="side-bar-link">
-          <IoIosSettings className="text-xl" />
-          <Link href="/settings">Settings</Link>
         </li>
       </ul>
     </div>

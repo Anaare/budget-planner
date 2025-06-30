@@ -1,12 +1,10 @@
 "use client";
-import Image from "next/image";
-import { LuLogOut } from "react-icons/lu";
-import { FaUser } from "react-icons/fa6";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { LuLogOut } from "react-icons/lu";
+import Image from "next/image";
 
 function Header() {
   const { data: session, status } = useSession();
-  console.log(session);
 
   if (status === "loading") return null; // or a spinner
 
@@ -22,9 +20,6 @@ function Header() {
             alt="user profile icon"
           />
           <p>{session.user.name}</p>
-          <button>
-            <FaUser />
-          </button>
           <button
             title="logout"
             onClick={() => signOut("google")}
