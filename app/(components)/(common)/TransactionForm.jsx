@@ -1,8 +1,11 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useSession } from "next-auth/react";
 import toast, { Toaster } from "react-hot-toast";
 
 function TransactionForm({ onClose, onTransactionSuccess, initialData }) {
+  const { data: session } = useSession();
+
   const {
     register,
     handleSubmit,
@@ -29,9 +32,9 @@ function TransactionForm({ onClose, onTransactionSuccess, initialData }) {
     } else {
       reset();
       setValue("date", new Date().toISOString().split("T")[0]);
-      setValue("userId", "demoUser123");
+      setValue("userId", session.user.email);
     }
-  }, [initialData, reset, setValue]);
+  }, [initialData, reset, setValue, session]);
 
   const onSubmit = async (data) => {
     let response;
@@ -193,25 +196,6 @@ function TransactionForm({ onClose, onTransactionSuccess, initialData }) {
         </select>
         {errors.type && (
           <p className="text-red-500 text-xs mt-1">{errors.type.message}</p>
-        )}
-      </div>
-
-      <div>
-        <label
-          htmlFor="userId"
-          className="block text-sm font-medium text-gray-700 mb-1"
-        >
-          User ID
-        </label>
-        <input
-          type="text"
-          {...register("userId", { required: "User ID is required" })}
-          id="userId"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
-          placeholder="e.g., user123"
-        />
-        {errors.userId && (
-          <p className="text-red-500 text-xs mt-1">{errors.userId.message}</p>
         )}
       </div>
 

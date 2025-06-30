@@ -2,13 +2,11 @@
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { FaFilter } from "react-icons/fa6";
-
+import { FaSortAlphaUp } from "react-icons/fa";
 import TransactionForm from "@/app/(components)/(common)/TransactionForm";
 import Modal from "@/app/(components)/(common)/Modal";
 import TransactionsTable from "@/app/(components)/(common)/TransactionsTable";
 import DeleteConfirmation from "@/app/(components)/(common)/DeleteConfirmation";
-import Filter from "@/app/(components)/(common)/Filter";
-import Sort from "@/app/(components)/(common)/Sort";
 
 function Transactions() {
   const [transactions, setTransactions] = useState([]);
@@ -19,9 +17,12 @@ function Transactions() {
   const [transactionToEdit, setTransactionToEdit] = useState(null);
   const [transactionToDeleteId, setTransactionToDeleteId] = useState(null);
 
+  // State for filtering
   const [activeFilter, setActiveFilter] = useState(null);
-  const [sortBy, setSortBy] = useState("date");
-  const [sortOrder, setSortOrder] = useState("desc");
+
+  // State for sorting
+  const [sortBy, setSortBy] = useState("date"); // Default sort by date
+  const [sortOrder, setSortOrder] = useState("desc"); // Default sort descending
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -43,14 +44,15 @@ function Transactions() {
 
   const handleFilterClick = (days) => {
     setActiveFilter(days);
-    setPage(1);
+    setPage(1); // Reset page when filter changes
   };
 
+  // New handler for sorting changes
   const handleSortChange = (e) => {
     const [field, order] = e.target.value.split("-");
     setSortBy(field);
     setSortOrder(order);
-    setPage(1);
+    setPage(1); // Reset page when sort changes
   };
 
   const fetchTransactions = async () => {
@@ -60,20 +62,36 @@ function Transactions() {
 
       let queryString = `/api/transactions?page=${page}&limit=${limit}`;
 
-      if (activeFilter !== null) queryString += `&days=${activeFilter}`;
-      if (sortBy) queryString += `&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+      // Add filtering parameters
+      if (activeFilter !== null) {
+        queryString += `&days=${activeFilter}`;
+      }
+
+      if (sortBy) {
+        queryString += `&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+      }
 
       const response = await fetch(queryString);
       const result = await response.json();
 
-      if (response.ok && result.success) {
-        setTransactions(result.data);
-        setTotalPages(result.totalPages);
+      if (response.ok) {
+        if (result.success) {
+          setTransactions(result.data);
+          setTotalPages(result.totalPages);
+        } else {
+          const errorMessage =
+            result.message || "Failed to load transactions from API.";
+          setError(errorMessage);
+          toast.error(errorMessage);
+          console.error("API Error:", result.message);
+        }
       } else {
-        const errorMessage = result.message || "Failed to load transactions.";
+        const errorMessage = `Server error: ${response.status} - ${
+          result.message || response.statusText
+        }`;
         setError(errorMessage);
         toast.error(errorMessage);
-        console.error("API Error:", errorMessage);
+        console.error("HTTP Error:", response.status, result.message);
       }
     } catch (err) {
       const errorMessage = "Network error or failed to parse response.";
@@ -105,6 +123,7 @@ function Transactions() {
       const result = await response.json();
 
       if (response.ok && result.success) {
+        console.log("Transaction deleted successfully:", id);
         toast.success("Transaction deleted successfully!");
         closeDeleteModal();
       } else {
@@ -147,8 +166,8 @@ function Transactions() {
       <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">
         Your Transactions
       </h2>
-
       <div className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+        {/* Add Transaction Button */}
         <button
           className="add-btn bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full sm:w-auto"
           onClick={() => {
@@ -158,22 +177,82 @@ function Transactions() {
         >
           Add A Transaction
         </button>
-
         {transactions.length > 0 && (
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-            <Filter
-              activeFilter={activeFilter}
-              onFilterChange={handleFilterClick}
-            />
-            <Sort
-              handleSortChange={handleSortChange}
-              sortBy={sortBy}
-              sortOrder={sortOrder}
-            />
+            {/* Filtering Buttons */}
+            <div className="filter-buttons flex flex-wrap gap-2 justify-center sm:justify-start">
+              <span className="self-center text-gray-700 font-medium whitespace-nowrap">
+                <FaFilter className="text-3xl" />
+              </span>
+              <button
+                className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
+                  activeFilter === null
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
+                onClick={() => handleFilterClick(null)}
+              >
+                All Time
+              </button>
+              <button
+                className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
+                  activeFilter === 7
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
+                onClick={() => handleFilterClick(7)}
+              >
+                7 Days
+              </button>
+              <button
+                className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
+                  activeFilter === 14
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
+                onClick={() => handleFilterClick(14)}
+              >
+                14 Days
+              </button>
+              <button
+                className={`py-2 px-4 rounded-md font-semibold transition-colors duration-200 ${
+                  activeFilter === 30
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
+                onClick={() => handleFilterClick(30)}
+              >
+                30 Days
+              </button>
+            </div>
+
+            {/* Sorting Dropdown */}
+            <div className="sort-control flex items-center gap-2 justify-center sm:justify-start">
+              <label
+                htmlFor="sort-by"
+                className="text-gray-700 font-medium whitespace-nowrap"
+              >
+                <FaSortAlphaUp className="text-3xl" />
+              </label>
+              <select
+                id="sort-by"
+                value={`${sortBy}-${sortOrder}`}
+                onChange={handleSortChange}
+                className="py-2 px-4 rounded-md font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="date-desc">Date (Newest First)</option>
+                <option value="date-asc">Date (Oldest First)</option>
+                <option value="amount-desc">Amount (High to Low)</option>
+                <option value="amount-asc">Amount (Low to High)</option>
+                <option value="category-asc">Category (A-Z)</option>
+                <option value="category-desc">Category (Z-A)</option>
+                <option value="type-asc">Type (A-Z)</option>
+                <option value="type-desc">Type (Z-A)</option>
+              </select>
+            </div>
           </div>
         )}
       </div>
-
       {transactions.length > 0 ? (
         <>
           <TransactionsTable
@@ -186,7 +265,7 @@ function Transactions() {
             <button
               disabled={page === 1}
               onClick={() => setPage((prev) => prev - 1)}
-              className="bg-gray-200 text-gray-800 hover:bg-gray-300 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-gray-200 text-gray-800 hover:bg-gray-300 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               Previous
             </button>
@@ -196,7 +275,7 @@ function Transactions() {
             <button
               disabled={page === totalPages || totalPages === 0}
               onClick={() => setPage((prev) => prev + 1)}
-              className="bg-gray-200 text-gray-800 hover:bg-gray-300 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-gray-200 text-gray-800 hover:bg-gray-300 px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               Next
             </button>
@@ -207,7 +286,6 @@ function Transactions() {
           You don't have any transactions yet.. 👀 add some 😎
         </h1>
       )}
-
       <Modal
         isOpen={isFormModalOpen}
         onClose={closeFormModal}
@@ -219,7 +297,6 @@ function Transactions() {
           initialData={transactionToEdit}
         />
       </Modal>
-
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={closeDeleteModal}
