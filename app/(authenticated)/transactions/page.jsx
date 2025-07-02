@@ -1,14 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { FaFilter } from "react-icons/fa6";
 
-import TransactionForm from "@/app/(components)/(common)/TransactionForm";
-import Modal from "@/app/(components)/(common)/Modal";
-import TransactionsTable from "@/app/(components)/(common)/TransactionsTable";
 import DeleteConfirmation from "@/app/(components)/(common)/DeleteConfirmation";
 import Filter from "@/app/(components)/(common)/Filter";
+import Modal from "@/app/(components)/(common)/Modal";
 import Sort from "@/app/(components)/(common)/Sort";
+import TransactionForm from "@/app/(components)/(common)/TransactionForm";
+import TransactionsTable from "@/app/(components)/(common)/TransactionsTable";
 
 function Transactions() {
   const [transactions, setTransactions] = useState([]);
