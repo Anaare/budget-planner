@@ -26,6 +26,8 @@ function Transactions() {
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
 
+  const filters = [null, 7, 14, 30];
+
   const openFormModal = () => setIsFormModalOpen(true);
   const closeFormModal = () => {
     setIsFormModalOpen(false);
@@ -163,6 +165,7 @@ function Transactions() {
             <Filter
               activeFilter={activeFilter}
               onFilterChange={handleFilterClick}
+              filters={filters}
             />
             <Sort
               handleSortChange={handleSortChange}

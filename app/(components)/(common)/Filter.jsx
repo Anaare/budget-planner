@@ -1,8 +1,8 @@
 "use client";
 import { FaFilter } from "react-icons/fa6";
 
-function Filter({ activeFilter, onFilterChange }) {
-  const filters = [null, 7, 14, 30];
+function Filter({ activeFilter, onFilterChange, filters }) {
+  // const filters = [null, 7, 14, 30];
 
   const getLabel = (days) => {
     if (days === null) return "All Time";

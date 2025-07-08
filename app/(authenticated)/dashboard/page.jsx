@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Pie,
   PieChart,
@@ -7,15 +7,25 @@ import {
   Tooltip,
   Legend,
   Cell,
+  BarChart, // Added BarChart
+  Bar, // Added Bar
+  XAxis, // Added XAxis
+  YAxis, // Added YAxis
+  CartesianGrid, // Added CartesianGrid
 } from "recharts";
 import getTransactionsData from "@/app/(lib)/getTransactionsData";
+
 import {
   sevenDays,
   thirtyDays,
-  yearlyExpense,
-  yearlyIncome,
+  calculateTotalExpense, // Renamed from yearlyExpense
+  calculateTotalIncome, // Renamed from yearlyIncome
+  filterTransactionsByMonthAndYear, // New filter function
+  getBudgetVsActualData, // New bar chart data prep function
 } from "@/app/(lib)/calculations";
 import numeral from "numeral";
+import getBudgetData from "@/app/(lib)/getBudgetData";
+import { getMonth, getYear, format } from "date-fns";
 
 const COLORS = [
   "#0088FE", // Blue
@@ -29,38 +39,80 @@ const COLORS = [
   "#C70039", // Dark Red
 ];
 
+/* FILTERING MUST BE ADDED LET'S SAY MONTHLY AND YEARLY MAYBE */
+/* ALSO I SHOULD ADD PROBABLY BAR CHART WITH BUDGET AND ACCORDING BALANCE MONTHLY */
+
 function Dashboard() {
   const [transactions, setTransactions] = useState([]);
+  const [budget, setBudget] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // State for monthly/yearly filter
+  const currentMonthIndex = getMonth(new Date());
+  const currentYear = getYear(new Date());
+
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthIndex);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+
+  // Fetch transactions
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchTransactions = async () => {
       try {
         setLoading(true);
         setError(null);
         const data = await getTransactionsData();
         setTransactions(data);
       } catch (err) {
-        console.error("Error fetching data for Dashboard:", err);
+        console.error("Error fetching transactions data for Dashboard:", err);
         setError(err);
       } finally {
-        setLoading(false);
+        // This setLoading(false) will be handled by the budget fetch's finally block
       }
     };
-
-    fetchData();
+    fetchTransactions();
   }, []);
 
-  // Calculate total expense and income across ALL transactions (All Time)
-  const totalExpense = numeral(yearlyExpense(transactions)).format("$0,0.00");
-  const totalIncome = numeral(yearlyIncome(transactions)).format("$0,0.00");
+  // Fetch budget data for the selected year
+  useEffect(() => {
+    const fetchBudget = async () => {
+      // Defensive check: Ensure selectedYear is a valid number before proceeding
+      // This helps prevent "ReferenceError" if selectedYear is somehow not initialized yet
+      if (typeof selectedYear !== "number" || isNaN(selectedYear)) {
+        console.warn(
+          "selectedYear is not a valid number, skipping budget fetch."
+        );
+        return;
+      }
 
-  // Filter transactions for the last 7 and 30 days
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getBudgetData(selectedYear); // Pass the year directly
+        setBudget(data);
+      } catch (err) {
+        console.error("Error fetching budget data for Dashboard:", err);
+        setError(err);
+      } finally {
+        setLoading(false); // This will be the final loading state setter for initial data
+      }
+    };
+    fetchBudget();
+  }, [selectedYear]); // Re-fetch budget data when selectedYear changes
+
+  const totalExpenseAllTime = numeral(
+    calculateTotalExpense(transactions)
+  ).format("$0,0.00");
+  const totalIncomeAllTime = numeral(calculateTotalIncome(transactions)).format(
+    "$0,0.00"
+  );
+  const netBalanceAllTime = numeral(
+    calculateTotalIncome(transactions) - calculateTotalExpense(transactions)
+  ).format("$0,0.00");
+
   const transactionsLast7Days = sevenDays(transactions);
   const transactionsLast30Days = thirtyDays(transactions);
 
-  // Helper function to group transactions by category and sum their values
   const groupTransactionsByCategory = (filteredTransactions, type) => {
     return filteredTransactions
       .filter((t) => t.type === type)
@@ -71,59 +123,112 @@ function Dashboard() {
       }, {});
   };
 
-  // --- Prepare Pie Chart Data for Last 30 Days: Group Expenses by Category ---
-  const expensesByCategoryLast30Days = groupTransactionsByCategory(
-    transactionsLast30Days,
-    "Expense"
+  const expensesByCategoryLast30Days = useMemo(
+    () => groupTransactionsByCategory(transactionsLast30Days, "Expense"),
+    [transactionsLast30Days]
   );
-  const pieChartData30Days = Object.entries(expensesByCategoryLast30Days).map(
-    ([name, value]) => ({ name, value })
+  const pieChartData30Days = useMemo(
+    () =>
+      Object.entries(expensesByCategoryLast30Days).map(([name, value]) => ({
+        name,
+        value,
+      })),
+    [expensesByCategoryLast30Days]
   );
-  const displayPieChartData30Days =
-    pieChartData30Days.length > 0
-      ? pieChartData30Days
-      : [{ name: "No Data", value: 1, fill: "#CCCCCC" }];
+  const displayPieChartData30Days = useMemo(
+    () =>
+      pieChartData30Days.length > 0
+        ? pieChartData30Days
+        : [{ name: "No Data", value: 1, fill: "#CCCCCC" }],
+    [pieChartData30Days]
+  );
 
-  // --- Prepare Pie Chart Data for Last 30 Days: Group Income by Category ---
-  const incomeByCategoryLast30Days = groupTransactionsByCategory(
-    transactionsLast30Days,
-    "Income"
+  const incomeByCategoryLast30Days = useMemo(
+    () => groupTransactionsByCategory(transactionsLast30Days, "Income"),
+    [transactionsLast30Days]
   );
-  const pieChartData30DaysIncome = Object.entries(
-    incomeByCategoryLast30Days
-  ).map(([name, value]) => ({ name, value }));
-  const displayPieChartData30DaysIncome =
-    pieChartData30DaysIncome.length > 0
-      ? pieChartData30DaysIncome
-      : [{ name: "No Data", value: 1, fill: "#CCCCCC" }];
+  const pieChartData30DaysIncome = useMemo(
+    () =>
+      Object.entries(incomeByCategoryLast30Days).map(([name, value]) => ({
+        name,
+        value,
+      })),
+    [incomeByCategoryLast30Days]
+  );
+  const displayPieChartData30DaysIncome = useMemo(
+    () =>
+      pieChartData30DaysIncome.length > 0
+        ? pieChartData30DaysIncome
+        : [{ name: "No Data", value: 1, fill: "#CCCCCC" }],
+    [pieChartData30DaysIncome]
+  );
 
-  // --- Prepare Pie Chart Data for Last 7 Days: Group Expenses by Category ---
-  const expensesByCategoryLast7Days = groupTransactionsByCategory(
-    transactionsLast7Days,
-    "Expense"
+  const expensesByCategoryLast7Days = useMemo(
+    () => groupTransactionsByCategory(transactionsLast7Days, "Expense"),
+    [transactionsLast7Days]
   );
-  const pieChartData7Days = Object.entries(expensesByCategoryLast7Days).map(
-    ([name, value]) => ({ name, value })
+  const pieChartData7Days = useMemo(
+    () =>
+      Object.entries(expensesByCategoryLast7Days).map(([name, value]) => ({
+        name,
+        value,
+      })),
+    [expensesByCategoryLast7Days]
   );
-  const displayPieChartData7Days =
-    pieChartData7Days.length > 0
-      ? pieChartData7Days
-      : [{ name: "No Data", value: 1, fill: "#CCCCCC" }];
+  const displayPieChartData7Days = useMemo(
+    () =>
+      pieChartData7Days.length > 0
+        ? pieChartData7Days
+        : [{ name: "No Data", value: 1, fill: "#CCCCCC" }],
+    [pieChartData7Days]
+  );
 
-  // --- Prepare Pie Chart Data for Last 7 Days: Group Income by Category ---
-  const incomeByCategoryLast7Days = groupTransactionsByCategory(
-    transactionsLast7Days,
-    "Income"
+  const incomeByCategoryLast7Days = useMemo(
+    () => groupTransactionsByCategory(transactionsLast7Days, "Income"),
+    [transactionsLast7Days]
   );
-  const pieChartData7DaysIncome = Object.entries(incomeByCategoryLast7Days).map(
-    ([name, value]) => ({ name, value })
+  const pieChartData7DaysIncome = useMemo(
+    () =>
+      Object.entries(incomeByCategoryLast7Days).map(([name, value]) => ({
+        name,
+        value,
+      })),
+    [incomeByCategoryLast7Days]
   );
-  const displayPieChartData7DaysIncome =
-    pieChartData7DaysIncome.length > 0
-      ? pieChartData7DaysIncome
-      : [{ name: "No Data", value: 1, fill: "#CCCCCC" }];
+  const displayPieChartData7DaysIncome = useMemo(
+    () =>
+      pieChartData7DaysIncome.length > 0
+        ? pieChartData7DaysIncome
+        : [{ name: "No Data", value: 1, fill: "#CCCCCC" }],
+    [incomeByCategoryLast7Days]
+  );
 
-  // Custom label rendering function for the Pie Chart slices
+  const transactionsFilteredByMonthYear = useMemo(
+    () =>
+      filterTransactionsByMonthAndYear(
+        transactions,
+        selectedMonth,
+        selectedYear
+      ),
+    [transactions, selectedMonth, selectedYear]
+  );
+
+  const totalExpenseFiltered = numeral(
+    calculateTotalExpense(transactionsFilteredByMonthYear)
+  ).format("$0,0.00");
+  const totalIncomeFiltered = numeral(
+    calculateTotalIncome(transactionsFilteredByMonthYear)
+  ).format("$0,0.00");
+  const netBalanceFiltered = numeral(
+    calculateTotalIncome(transactionsFilteredByMonthYear) -
+      calculateTotalExpense(transactionsFilteredByMonthYear)
+  ).format("$0,0.00");
+
+  const budgetVsActualChartData = useMemo(
+    () => getBudgetVsActualData(transactions, budget, selectedYear),
+    [transactions, budget, selectedYear]
+  );
+
   const renderCustomizedLabel = ({
     cx,
     cy,
@@ -134,12 +239,10 @@ function Dashboard() {
     name,
     value,
   }) => {
-    // Only show labels for slices that are large enough to avoid clutter
     if (percent < 0.05) {
       return null;
     }
 
-    // Calculate position for the label slightly outside the slice
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos((-midAngle * Math.PI) / 180);
     const y = cy + radius * Math.sin((-midAngle * Math.PI) / 180);
@@ -158,18 +261,15 @@ function Dashboard() {
     );
   };
 
-  // Calculate total income for last 30 days
-  const totalIncomeLast30Days = numeral(
-    yearlyIncome(transactionsLast30Days)
-  ).format("$0,0.00");
-  // Calculate total expenses for last 30 days (for the card)
-  const totalExpenseLast30Days = numeral(
-    yearlyExpense(transactionsLast30Days)
-  ).format("$0,0.00");
-  // Calculate net balance for last 30 days
-  const netBalanceLast30Days = numeral(
-    yearlyIncome(transactionsLast30Days) - yearlyExpense(transactionsLast30Days)
-  ).format("$0,0.00");
+  const monthOptions = Array.from({ length: 12 }, (_, i) => ({
+    value: i,
+    label: format(new Date(currentYear, i, 1), "MMMM"),
+  }));
+
+  const yearOptions = Array.from({ length: 5 }, (_, i) => ({
+    value: currentYear - 2 + i,
+    label: (currentYear - 2 + i).toString(),
+  }));
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen text-gray-800">
@@ -187,48 +287,135 @@ function Dashboard() {
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-gray-900 p-6 rounded-lg shadow-md flex flex-col justify-between">
           <h2 className="text-xl font-bold mb-2 text-white">Total Income</h2>
-          <p className="text-3xl font-semibold text-green-400">{totalIncome}</p>
-        </div>
-        <div className="bg-gray-900 p-6 rounded-lg shadow-md flex flex-col justify-between">
-          <h2 className="text-xl font-bold mb-2 text-white">Total Expenses</h2>
-          <p className="text-3xl font-semibold text-red-400">{totalExpense}</p>
-        </div>
-        <div className="bg-gray-900 p-6 rounded-lg shadow-md flex flex-col justify-between">
-          <h2 className="text-xl font-bold mb-2 text-white">Net Balance</h2>
-          <p className="text-3xl font-semibold text-blue-400">
-            {numeral(
-              yearlyIncome(transactions) - yearlyExpense(transactions)
-            ).format("$0,0.00")}
-          </p>
-        </div>
-      </div>
-
-      {/* Overview Cards (Last 30 Days) */}
-      <h2 className="text-2xl font-bold mb-4 mt-8 text-center text-gray-800">
-        Last 30 Days Overview
-      </h2>
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-gray-900 p-6 rounded-lg shadow-md flex flex-col justify-between">
-          <h2 className="text-xl font-bold mb-2 text-white">Total Income</h2>
           <p className="text-3xl font-semibold text-green-400">
-            {totalIncomeLast30Days}
+            {totalIncomeAllTime}
           </p>
         </div>
         <div className="bg-gray-900 p-6 rounded-lg shadow-md flex flex-col justify-between">
           <h2 className="text-xl font-bold mb-2 text-white">Total Expenses</h2>
           <p className="text-3xl font-semibold text-red-400">
-            {totalExpenseLast30Days}
+            {totalExpenseAllTime}
           </p>
         </div>
         <div className="bg-gray-900 p-6 rounded-lg shadow-md flex flex-col justify-between">
           <h2 className="text-xl font-bold mb-2 text-white">Net Balance</h2>
           <p className="text-3xl font-semibold text-blue-400">
-            {netBalanceLast30Days}
+            {netBalanceAllTime}
           </p>
         </div>
       </div>
 
-      {/* Conditional Rendering for Charts based on loading/error */}
+      {/* Monthly/Yearly Filter Section */}
+      <h2 className="text-2xl font-bold mb-4 mt-8 text-center text-gray-800">
+        Monthly/Yearly Analytics
+      </h2>
+      <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(Number(e.target.value))}
+          className="p-2 border rounded-md bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {monthOptions.map((month) => (
+            <option key={month.value} value={month.value}>
+              {month.label}
+            </option>
+          ))}
+        </select>
+        <select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(Number(e.target.value))}
+          className="p-2 border rounded-md bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {yearOptions.map((year) => (
+            <option key={year.value} value={year.value}>
+              {year.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Overview Cards (Filtered by Month/Year) */}
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="bg-gray-900 p-6 rounded-lg shadow-md flex flex-col justify-between">
+          <h2 className="text-xl font-bold mb-2 text-white">
+            Total Income (
+            {format(new Date(selectedYear, selectedMonth, 1), "MMMM yyyy")})
+          </h2>
+          <p className="text-3xl font-semibold text-green-400">
+            {totalIncomeFiltered}
+          </p>
+        </div>
+        <div className="bg-gray-900 p-6 rounded-lg shadow-md flex flex-col justify-between">
+          <h2 className="text-xl font-bold mb-2 text-white">
+            Total Expenses (
+            {format(new Date(selectedYear, selectedMonth, 1), "MMMM yyyy")})
+          </h2>
+          <p className="text-3xl font-semibold text-red-400">
+            {totalExpenseFiltered}
+          </p>
+        </div>
+        <div className="bg-gray-900 p-6 rounded-lg shadow-md flex flex-col justify-between">
+          <h2 className="text-xl font-bold mb-2 text-white">
+            Net Balance (
+            {format(new Date(selectedYear, selectedMonth, 1), "MMMM yyyy")})
+          </h2>
+          <p className="text-3xl font-semibold text-blue-400">
+            {netBalanceFiltered}
+          </p>
+        </div>
+      </div>
+
+      {/* Bar Chart: Budget vs Actual (Monthly) */}
+      <h2 className="text-2xl font-bold mb-4 mt-8 text-center text-gray-800">
+        Budget vs Actual (Monthly - {selectedYear})
+      </h2>
+      {loading ? (
+        <p className="text-center text-gray-500 mt-8">
+          Loading budget chart...
+        </p>
+      ) : error ? (
+        <p className="text-center text-red-500 mt-8">
+          Error loading budget chart: {error.message}
+        </p>
+      ) : (
+        <div className="w-full h-[400px] bg-gray-900 rounded-lg shadow-md p-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={budgetVsActualChartData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+              <XAxis dataKey="name" stroke="#999" />
+              <YAxis
+                stroke="#999"
+                tickFormatter={(value) => numeral(value).format("$0a")}
+              />
+              <Tooltip
+                formatter={(value) => numeral(value).format("$0,0.00")}
+              />
+              <Legend />
+              <Bar
+                dataKey="budgetedExpenses"
+                fill="#FF8042"
+                name="Budgeted Expenses"
+              />
+              <Bar
+                dataKey="actualExpenses"
+                fill="#C70039"
+                name="Actual Expenses"
+              />
+              <Bar
+                dataKey="budgetedIncome"
+                fill="#00C49F"
+                name="Budgeted Income"
+              />
+              <Bar dataKey="actualIncome" fill="#0088FE" name="Actual Income" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Conditional Rendering for Pie Charts based on loading/error */}
       {loading ? (
         <p className="text-center text-gray-500 mt-8">Loading chart data...</p>
       ) : error ? (
@@ -410,4 +597,5 @@ function Dashboard() {
     </div>
   );
 }
+
 export default Dashboard;
