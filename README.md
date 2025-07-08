@@ -2,7 +2,7 @@
 
 A modern budgeting application that helps users **track income**, **manage expenses**, and **analyze their financial activity** over time. Built with a responsive UI, intuitive charts, and secure user authentication.
 
-[🔗 Live Demo on Netlify or Vercel _(https://budget-planner-j2qi.vercel.app/)_](#)  
+[🔗 Live Demo on Netlify or Vercel](<(https://budget-planner-j2qi.vercel.app/)>>>)  
 [📂 GitHub Repository](https://github.com/Anaare/budget-planner)
 
 ---
