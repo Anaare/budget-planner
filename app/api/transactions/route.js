@@ -1,9 +1,8 @@
-import dbConnect from "../../(utils)/dbConnect";
-import Transaction from "../../(models)/TransactionSchema";
 import { NextResponse } from "next/server";
-
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
+import dbConnect from "../../(utils)/dbConnect";
+import Transaction from "../../(models)/TransactionSchema";
 
 export async function GET(request) {
   await dbConnect();
@@ -74,7 +73,7 @@ export async function POST(request) {
     const body = await request.json();
     const newTransaction = new Transaction({
       ...body,
-      userId: session.user.email, // enforce ownership
+      userId: session.user.email,
     });
 
     await newTransaction.save();

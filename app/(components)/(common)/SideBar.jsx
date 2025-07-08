@@ -1,5 +1,6 @@
 import { FaChartBar } from "react-icons/fa";
 import { GrTransaction } from "react-icons/gr";
+import { FiTarget } from "react-icons/fi";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -23,6 +24,10 @@ function SideBar() {
         <li className="side-bar-link">
           <GrTransaction />
           <Link href="/transactions">Transactions</Link>
+        </li>
+        <li className="side-bar-link">
+          <FiTarget />
+          <Link href="/budget">Budget</Link>
         </li>
       </ul>
     </div>
